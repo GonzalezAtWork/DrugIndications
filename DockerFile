@@ -1,0 +1,21 @@
+# Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /app
+
+# Copy csproj and restore as distinct layers
+COPY *.sln .
+COPY DrugIndications.API/*.csproj ./DrugIndications.API/
+COPY DrugIndications.Application/*.csproj ./DrugIndications.Application/
+COPY DrugIndications.Domain/*.csproj ./DrugIndications.Domain/
+COPY DrugIndications.Infrastructure/*.csproj ./DrugIndications.Infrastructure/
+RUN dotnet restore
+
+# Copy everything else and build
+COPY . .
+RUN dotnet publish -c Release -o out
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
+WORKDIR /app
+COPY --from=build /app/out .
+ENTRYPOINT ["dotnet", "DrugIndications.API.dll"]
